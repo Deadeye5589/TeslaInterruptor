@@ -33,7 +33,7 @@ unsigned long previousMillis = 0;
 const long interval = 10000;  // interval to wait for Wi-Fi connection (milliseconds)
 
 // Set LED GPIO
-const int ledPin = 2;
+const int ledPin = 38;
 // Stores LED state
 
 String ledState;

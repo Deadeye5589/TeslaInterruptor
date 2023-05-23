@@ -10,29 +10,23 @@ AsyncWebServer server(80);
 // Search for parameter in HTTP POST request
 const char* PARAM_INPUT_1 = "ssid";
 const char* PARAM_INPUT_2 = "pass";
-const char* PARAM_INPUT_3 = "ip";
-const char* PARAM_INPUT_4 = "gateway";
 
 
 //Variables to save values from HTML form
 String ssid;
 String pass;
-String ip;
-String gateway;
 
 // File paths to save input values permanently
 const char* ssidPath = "/ssid.txt";
 const char* passPath = "/pass.txt";
-const char* ipPath = "/ip.txt";
-const char* gatewayPath = "/gateway.txt";
 
-IPAddress localIP;
-//IPAddress localIP(4, 3, 2, 1); // hardcoded
 
-// Set your Gateway IP address
-IPAddress localGateway;
-//IPAddress localGateway(4, 3, 2, 1); //hardcoded
-IPAddress subnet(255, 255, 0, 0);
+//AP Mode network settings;
+const char* localssid = "Tesla Interocitor";
+const char* localpwd = "hardies42";
+IPAddress localIP(4, 3, 2, 1); // hardcoded
+IPAddress localGateway(4, 3, 2, 1); //hardcoded
+IPAddress subnet(255, 255, 255, 0);
 
 // Timer variables
 unsigned long previousMillis = 0;
@@ -88,20 +82,13 @@ void writeFile(fs::FS &fs, const char * path, const char * message){
 
 // Initialize WiFi
 bool initWiFi() {
-  if(ssid=="" || ip==""){
+  if(ssid==""){
     Serial.println("Undefined SSID or IP address.");
     return false;
   }
 
   WiFi.mode(WIFI_STA);
-  localIP.fromString(ip.c_str());
-  localGateway.fromString(gateway.c_str());
 
-
-  if (!WiFi.config(localIP, localGateway, subnet)){
-    Serial.println("STA Failed to configure");
-    return false;
-  }
   WiFi.begin(ssid.c_str(), pass.c_str());
   Serial.println("Connecting to WiFi...");
 
@@ -136,6 +123,7 @@ String processor(const String& var) {
 
 void setup() {
   // Serial port for debugging purposes
+  delay(5000);
   Serial.begin(115200);
 
   initSPIFFS();
@@ -147,12 +135,8 @@ void setup() {
   // Load values saved in SPIFFS
   ssid = readFile(SPIFFS, ssidPath);
   pass = readFile(SPIFFS, passPath);
-  ip = readFile(SPIFFS, ipPath);
-  gateway = readFile (SPIFFS, gatewayPath);
   Serial.println(ssid);
   Serial.println(pass);
-  Serial.println(ip);
-  Serial.println(gateway);
 
   if(initWiFi()) {
     // Route for root / web page
@@ -177,8 +161,10 @@ void setup() {
   else {
     // Connect to Wi-Fi network with SSID and password
     Serial.println("Setting AP (Access Point)");
-    // NULL sets an open Access Point
-    WiFi.softAP("ESP-WIFI-MANAGER", NULL);
+    // Start an AP 
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(localssid, localpwd);
+    WiFi.softAPConfig(localIP, localGateway, subnet);
 
     IPAddress IP = WiFi.softAPIP();
     Serial.print("AP IP address: ");
@@ -212,26 +198,10 @@ void setup() {
             // Write file to save value
             writeFile(SPIFFS, passPath, pass.c_str());
           }
-          // HTTP POST ip value
-          if (p->name() == PARAM_INPUT_3) {
-            ip = p->value().c_str();
-            Serial.print("IP Address set to: ");
-            Serial.println(ip);
-            // Write file to save value
-            writeFile(SPIFFS, ipPath, ip.c_str());
-          }
-          // HTTP POST gateway value
-          if (p->name() == PARAM_INPUT_4) {
-            gateway = p->value().c_str();
-            Serial.print("Gateway set to: ");
-            Serial.println(gateway);
-            // Write file to save value
-            writeFile(SPIFFS, gatewayPath, gateway.c_str());
-          }
           //Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
         }
       }
-      request->send(200, "text/plain", "Done. ESP will restart, connect to your router and go to IP address: " + ip);
+      request->send(200, "text/plain", "Done. ESP will restart" );
       delay(3000);
       ESP.restart();
     });

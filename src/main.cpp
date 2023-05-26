@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <AiEsp32RotaryEncoder.h>
+#include "encoder.h"
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer *server;
@@ -39,15 +40,6 @@ IPAddress subnet(255, 255, 255, 0);
 #define SD_MOSI_PIN      13
 #define SD_MISO_PIN      11
 
-
-/*Define Volume Encoder Pins and Classes*/
-#define ROTARY_ENCODER_A_PIN 44
-#define ROTARY_ENCODER_B_PIN 18
-#define ROTARY_ENCODER_BUTTON_PIN 43
-#define ROTARY_ENCODER_VCC_PIN -1
-#define ROTARY_ENCODER_STEPS 2
-
-AiEsp32RotaryEncoder rotaryEncoder = AiEsp32RotaryEncoder(ROTARY_ENCODER_A_PIN, ROTARY_ENCODER_B_PIN, ROTARY_ENCODER_BUTTON_PIN, ROTARY_ENCODER_VCC_PIN, ROTARY_ENCODER_STEPS);
 
 // Timer variables
 unsigned long previousMillis = 0;
@@ -166,10 +158,6 @@ void initSDCARD() {
   Serial.printf("SD Card Size: %lluMB\n", cardSize);
 }
 
-
-void initEncoder() {
-
-}
 
 
 // source: https://github.com/CelliesProjects/minimalUploadAuthESP32
@@ -327,11 +315,6 @@ void configureWebServer() {
 
 
 
-void IRAM_ATTR readEncoderISR(){
-  rotaryEncoder.readEncoder_ISR();
-}
-
-
 void setup() {
   // Serial port for debugging purposes
   delay(5000);
@@ -341,14 +324,10 @@ void setup() {
 
   initSDCARD();
 
+  initEncoder();
 
-  pinMode(ROTARY_ENCODER_A_PIN, INPUT_PULLUP);
-  pinMode(ROTARY_ENCODER_B_PIN, INPUT_PULLUP);
-  rotaryEncoder.begin();
-  rotaryEncoder.setup(readEncoderISR);
-  rotaryEncoder.setBoundaries(0, 100, 0);
-  rotaryEncoder.setAcceleration(10);
-  
+
+ 
   // Load values saved in SPIFFS
   ssid = readFile(SPIFFS, ssidPath);
   pass = readFile(SPIFFS, passPath);
@@ -414,18 +393,12 @@ void setup() {
 }
 
 void loop() {
-  int8_t temp;
-  static unsigned long lastTimePressed = 0;
-
-   if (rotaryEncoder.encoderChanged()) {
+   if (rotaryencoderchanged()) {
     Serial.print("Encoder Value: ");
-    Serial.println(rotaryEncoder.readEncoder());
+    Serial.println(rotaryencodervalue());
    }
-   if (rotaryEncoder.isEncoderButtonClicked()) {
-    
-    if (millis() - lastTimePressed < 500)
-        return; //ignore multiple press in that time milliseconds
-    lastTimePressed = millis();
+   
+   if (rotaryencoderbuttonpressed()) {
     Serial.println("Click");
    }
 }

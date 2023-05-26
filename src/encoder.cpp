@@ -13,8 +13,8 @@ void initEncoder() {
   pinMode(ROTARY_ENCODER_B_PIN, INPUT_PULLUP);
   rotaryEncoder.begin();
   rotaryEncoder.setup(readEncoderISR);
-  rotaryEncoder.setBoundaries(0, 100, 0);
-  rotaryEncoder.setAcceleration(10);
+  rotaryEncoder.setBoundaries(0, 5, 0);
+  // rotaryEncoder.setAcceleration(10);
 }
 
 

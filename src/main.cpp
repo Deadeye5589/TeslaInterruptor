@@ -382,7 +382,7 @@ void setup() {
   lv_init();
 
   tft.begin();          /* TFT init */
-  tft.setRotation( 3 ); /* Landscape orientation, flipped */
+  tft.setRotation( 1 ); /* Landscape orientation, flipped */
 
   lv_disp_draw_buf_init( &draw_buf, buf, NULL, screenWidth * screenHeight / 10 );
 
@@ -472,13 +472,28 @@ void setup() {
 }
 
 void loop() {
+  static bool playpause = 1;
    if (rotaryencoderchanged()) {
+    uint16_t temp = 0;
+    temp = rotaryencodervalue();
+    lv_roller_set_selected(ui_SongSelect, temp, LV_ANIM_ON);
     Serial.print("Encoder Value: ");
-    Serial.println(rotaryencodervalue());
+    Serial.println(temp);
    }
 
    if (rotaryencoderbuttonpressed()) {
-    Serial.println("Click");
+    if(playpause) {
+      lv_obj_set_style_opa(ui_Pause, 255, 0);
+      lv_obj_set_style_opa(ui_Play, 0, 0);
+      Serial.println("Play");
+      playpause = 0;
+    }
+    else {
+      lv_obj_set_style_opa(ui_Play, 255, 0);
+      lv_obj_set_style_opa(ui_Pause, 0, 0);
+      Serial.println("Pause");
+      playpause = 1;
+    }
    }
 
    lv_timer_handler(); /* let the GUI do its work */
